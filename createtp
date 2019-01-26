@@ -1,0 +1,240 @@
+#!/bin/bash
+
+
+# TODO 
+#
+# - check the files in $DIR
+# - create a minimal template available throught the -m (--minimal) option 
+# - make the logo optional
+# - how to open file explorer ?
+
+# name of the folder containing the template files
+DIR="template"
+dir_found=false
+logo_name="logonb.pdf"
+
+usage() {
+    echo "Usage : createtp filename title subtitle course"
+    echo
+    echo "If you don't have a template directory, you bust have the file $logo_name in $0 (path of this command)"
+    do_exit
+}
+ 
+do_exit() {
+    exit
+}
+
+create_dir() {
+	if [[ ! -d "$prefix/$DIR" ]]; then
+		mkdir $prefix/$DIR
+	fi
+	
+	echo "folder \"$DIR\" created in $(realpath $prefix)"
+}
+
+ask_where_create_dir() {
+	prefix="."
+	echo "Where do you want to create de $DIR directory ?"
+	echo "$(realpath $prefix) ($prefix/) ? [y/n] (a : abort)" 
+	read yn
+	while [[ $yn != y && $(realpath $prefix) != "/" ]]; do
+		if [[ $yn == "a" ]]; then
+			echo "Aborting..."
+			do_exit
+		fi
+		prefix="$prefix/.."
+		echo "$(realpath $prefix)/ ($prefix/) ? [y/n] (a : abort)"
+		read yn
+	done
+	create_dir
+}
+
+fill_dir() {
+	echo '' > $prefix/$DIR/commands.tex
+	echo '\newenvironment{myverb}
+{\VerbatimEnvironment\begin{Verbatim}[frame=single]}
+{\end{Verbatim}}' > $prefix/$DIR/environments.tex
+	echo '\usepackage[left=2cm,right=2cm, bottom=3.5cm, top=3cm]{geometry}
+\usepackage{amsmath}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage[french]{babel}
+\usepackage{lastpage}
+\usepackage[T1]{fontenc}
+\usepackage{gensymb}
+\usepackage[tight]{shorttoc}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{color}
+\usepackage{caption}
+\usepackage{wrapfig}
+\usepackage{fancyhdr}
+\usepackage{fancyvrb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{subcaption}
+%\usepackage[dvipsnames]{xcolor}
+\usepackage{wrapfig}
+\usepackage{pgfplots}
+\usepackage{qtree}
+\usepackage{minted}
+\usepackage{keyval}
+\usepackage{kvoptions}
+\usepackage{fancyvrb}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\newdimen\nodeDist
+\nodeDist=35mm
+\usepackage[normalem]{ulem} % Pour barrer du texte
+\usepackage{pdfpages}
+%\pagestyle{fancy}
+% \fancyhead[L]{}
+\fancyhead[C]{Projet de semestre}
+% \fancyhead[R]{Prof: F. Bapst}
+\fancyfoot[L]{Groupe 1}
+\fancyfoot[C]{\thepage\ sur \pageref{LastPage}}
+\fancyfoot[R]{HEIA-FR}
+\renewcommand{\footrulewidth}{0.5pt}
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\setlength{\parindent}{0cm}' > $prefix/$DIR/packages.tex
+
+cp "$(dirname $0)/logonb.pdf" "$prefix/$DIR" 
+}
+
+# fetch options
+while getopts ":ht" option; do
+    case "${option}" in
+        h)
+            # h=${OPTARG} # We don't use the word given after h
+            echo HELP:
+            usage 
+            ;;
+        t)
+            echo test
+            ;;
+        \?)
+            echo NOT VALID PARAM
+            usage 
+            ;;
+    esac
+done
+
+shift $((OPTIND-1)) # Move until parameters
+
+# Check if NB parameter is correct
+if [[ $# != 4 ]]; then
+    usage
+fi
+
+filename="$1"
+title="$2"
+subtitle="$3"
+course="$4"
+
+prefix="." # begin in current directory
+
+# while until root
+while [[ ! $prefix -ef / ]]; do
+    # echo "$prefix/$DIR"
+    # check if DIR is in parent folder
+    if [[ $(ls $prefix | grep $DIR)  == $DIR ]]; then
+    	# echo FOUND
+    	dir_found=true
+    	break
+    fi
+    prefix="$prefix/.."
+done
+
+# Exit program if the template has not been found
+if [[ $dir_found == false ]]; then
+    	echo "The folder $DIR has not been found in parent folders"
+    	echo "Do you want to create it ? [y/n]"
+    	read yn
+    	if [[ $yn == y ]]; then
+    		ask_where_create_dir
+    		fill_dir
+    		# Now that there is a valid template folder in a ancestor folder, recall recursively
+    		createtp "$filename" "$title" "$subtitle" "$course"
+    		do_exit
+    	else
+    		echo "Aborting..."
+    		do_exit
+    	fi
+else
+		echo "Template directory has been found in $(realpath $prefix)/"
+fi
+
+# Create the folder containing the tp (which has the same name as the TP)
+if [[ ! -d "$filename" ]]; then
+	mkdir "$filename"
+else
+	echo "Warning, folder $filename already exists !"
+	echo "Use this directory to put the .tex files ? [y/n]"
+	read yn
+	if [[ $yn == "n" ]]; then
+		echo "Aborting..."
+		do_exit
+	fi
+fi
+prefix="$prefix/.." # The prefix has to be one level upper because it will
+					# be inserted in the new folder
+
+# =========================================================
+# titlepage.tex
+# =========================================================
+echo '\begin{titlepage}
+%\thispagestyle{fancy} % Cette commande permet de mettre un en-tête à la page de titre
+\begin{center}
+\includegraphics[width=\textwidth]{'$prefix'/'$DIR'/logonb.pdf}\\
+\vspace{2.5cm}
+{\Huge \textbf{'$title'}}\\% Titre principal
+\vspace{0.2cm}
+{\huge '$subtitle'}\\% Titre secondaire
+\vspace{0.9cm}
+\large{'$course'}\\
+\vspace{0.9cm}
+{\large David Alvarez}
+\hspace{2cm}
+{\large Loïc Amantini}\\
+I-3\\
+\vspace{0.9cm}
+\vspace{0.9cm}
+\vspace{0.9cm}
+\vspace{0.9cm}
+{\Large \today}\\
+\end{center}
+\vspace{1.8cm}
+\tableofcontents
+\end{titlepage}' > "$filename"/titlepage.tex
+
+# =========================================================
+# $filename.tex
+# =========================================================
+echo '\documentclass[a4paper, 10pt]{article}
+
+\input{'$prefix'/template/packages.tex}
+\input{'$prefix'/template/commands.tex}
+\input{'$prefix'/template/environments.tex}
+
+
+\begin{document}
+
+\input{titlepage}
+
+
+\newpage
+
+
+
+
+
+
+\end{document}' > "$filename/$filename".tex
+
+echo "folder \"$filename\" created"

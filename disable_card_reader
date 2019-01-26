@@ -1,0 +1,4 @@
+#!/bin/bash
+# This is ran at startup by disable_card_reader.service. Thus no need sudo before tee
+
+echo "2-3" | tee /sys/bus/usb/drivers/usb/unbind

@@ -1,0 +1,45 @@
+#!/bin/bash
+
+recurse() {
+	for i in $1/*; do
+		if [[ -d "$i" ]] && [[ "$i" == *_repo ]]; then
+			cd $i
+			echo "##### $(basename $i) #####"
+			git pull
+			cd ..
+		elif [[ -d "$i" ]]; then
+			recurse "$i"
+		fi
+	done 	
+}
+
+recurse $HOME/Documents
+
+
+
+
+# Older versions :
+
+# --------------------------------------------------------------
+
+# find ~/Documents/ -path "*_repo" | xargs -t -I {} git -C {} pull
+
+# --------------------------------------------------------------
+
+# cd $HOME/Documents/genie_logiciel/SavanaLife_repo/
+# git pull
+
+# cd $HOME/Documents/ihm/via_repo/
+# git pull
+
+# cd $HOME/Documents/prog_logique/bapst_repo/
+# git pull
+# cd $HOME/Documents/prog_logique/tp_repo/
+# git pull
+
+# cd $HOME/Documents/ps5-covoiturage_repo/
+# git pull
+
+
+
+
