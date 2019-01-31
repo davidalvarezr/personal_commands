@@ -5,14 +5,13 @@ BEGIN {
 # Line which begins with "alias"
 /^alias/ {
     for (i=2; i<=NF; i++) {
-        if ($i ~ /^#/ ){
+        if ($i ~ /^#/ ){                # Remove comments
             break;
         } 
         else {
-
-            sub("=", " ");
+            sub("=", " ");              # Replace = by " "
             if (i == 2) {
-                printf("%-20s", $i);
+                printf("%-20s", $i);    # Align right column
             }  else {
                 printf $i" ";    
             }
@@ -21,7 +20,7 @@ BEGIN {
         
     }
     printf "\n"
-    ++cnt;
+    ++cnt;                              # Count each line beginning with alias
 }
 
 
