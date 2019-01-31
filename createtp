@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Creates a latex document with arguments given in parameters
 
 # TODO 
 #
